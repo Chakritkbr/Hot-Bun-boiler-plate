@@ -1,5 +1,5 @@
 import { Request, RequestHandler, Response } from 'express';
-import { Pool } from 'mysql2/promise';
+import { Pool, ResultSetHeader } from 'mysql2/promise';
 import dbPool from '../db';
 import {
   checkUserExists,
@@ -50,16 +50,17 @@ export const login: RequestHandler = async (req: Request, res: Response) => {
 
   try {
     // Find user by email
-    const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [
-      email,
-    ]);
+    const [rows] = await pool.query<UserInterface[]>(
+      'SELECT * FROM users WHERE email = ?',
+      [email]
+    );
 
     // If no user is found
-    if ((rows as UserInterface[]).length === 0) {
+    if (rows.length === 0) {
       return res.status(400).json({ message: 'Invalid email or password.' });
     }
 
-    const user = (rows as UserInterface[])[0];
+    const user = rows[0];
 
     // Check if the provided password matches the stored hashed password
     const isPasswordValid = await checkPassword(password, user.password);
@@ -87,4 +88,58 @@ export const protectedAdmin = (req: CustomUserRequest, res: Response) => {
   res
     .status(200)
     .json({ message: 'This is a protected route.', user: req.user });
+};
+
+export const updateUser = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { email, password } = req.body;
+  const pool: Pool = dbPool;
+
+  const { error } = userValidate.validate({ email, password });
+  if (error) {
+    res.status(400).json({ message: error.details[0].message });
+  }
+  try {
+    const [rows] = await pool.query<UserInterface[]>(
+      'SELECT * FROM users WHERE id = ?',
+      [id]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    if (await checkUserExists(pool, email)) {
+      return res.status(400).json({ message: 'Email is already use' });
+    }
+    const hashedPassword = await hashPassword(password);
+
+    await pool.query('UPDATE users SET email = ?, password = ? WHERE id = ? ', [
+      email,
+      hashedPassword,
+      id,
+    ]);
+    res.status(200).json({ message: 'User updated successfully.' });
+  } catch (error) {
+    console.error('Error updating user:', error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+};
+
+export const deleteUser = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const pool: Pool = dbPool;
+
+  try {
+    const [result] = await pool.query<ResultSetHeader>(
+      'DELETE FROM users WHERE id = ?',
+      [id]
+    );
+
+    // ตรวจสอบว่ามีการลบแถวหรือไม่
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+  } catch (error) {
+    console.log('Error deleting user:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
 };
