@@ -12,9 +12,12 @@ import {
 } from '../utils/authUtils';
 import { CustomUserRequest } from '../middlewares/authMiddleware';
 
+//DB connect
+const pool: Pool = dbPool;
+
 export const register: RequestHandler = async (req: Request, res: Response) => {
   const { email, password } = req.body;
-  const pool: Pool = dbPool;
+
   const { error } = userValidate.validate({ email, password });
   if (error) {
     return res.status(400).json({ message: error.details[0].message });
@@ -38,9 +41,8 @@ export const register: RequestHandler = async (req: Request, res: Response) => {
   }
 };
 
-export const login: RequestHandler = async (req: Request, res: Response) => {
+export const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
-  const pool: Pool = dbPool;
 
   // Validate request data
   const { error } = userValidate.validate({ email, password });
@@ -60,16 +62,17 @@ export const login: RequestHandler = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Invalid email or password.' });
     }
 
-    const user = rows[0];
-
     // Check if the provided password matches the stored hashed password
+    const user = rows[0];
     const isPasswordValid = await checkPassword(password, user.password);
+
     if (!isPasswordValid) {
       return res.status(400).json({ message: 'Invalid email or password.' });
     }
-    //gen jwt token
 
+    //gen jwt token
     const token = genToken({ id: user.id, email: user.email });
+
     // Respond with success message
     res.status(200).json({ message: 'Login successful.', token });
   } catch (error) {
@@ -93,9 +96,8 @@ export const protectedAdmin = (req: CustomUserRequest, res: Response) => {
 export const updateUser = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { email, password } = req.body;
-  const pool: Pool = dbPool;
-
   const { error } = userValidate.validate({ email, password });
+
   if (error) {
     res.status(400).json({ message: error.details[0].message });
   }
@@ -110,8 +112,8 @@ export const updateUser = async (req: Request, res: Response) => {
     if (await checkUserExists(pool, email)) {
       return res.status(400).json({ message: 'Email is already use' });
     }
-    const hashedPassword = await hashPassword(password);
 
+    const hashedPassword = await hashPassword(password);
     await pool.query('UPDATE users SET email = ?, password = ? WHERE id = ? ', [
       email,
       hashedPassword,
@@ -126,7 +128,6 @@ export const updateUser = async (req: Request, res: Response) => {
 
 export const deleteUser = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const pool: Pool = dbPool;
 
   try {
     const [result] = await pool.query<ResultSetHeader>(
