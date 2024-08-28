@@ -33,7 +33,7 @@ export const register: RequestHandler = async (req: Request, res: Response) => {
     );
     res.status(201).json({ message: 'User registered successfully.' });
   } catch (error) {
-    console.error('Error registering user:', error);
+    console.error('Error in register:', error);
     res.status(500).json({ message: 'Internal server error.' });
   }
 };
