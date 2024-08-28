@@ -71,16 +71,6 @@ describe('POST /register', () => {
     expect(response.body.message).toBe('User registered successfully.');
   });
 
-  // Mock console.error
-  const originalConsoleError = console.error;
-  beforeEach(() => {
-    console.error = jest.fn();
-  });
-
-  afterEach(() => {
-    console.error = originalConsoleError;
-  });
-
   it('should return 500 if there is a server error', async () => {
     (userValidate.validate as jest.Mock).mockReturnValue({ error: null });
     (checkUserExists as jest.Mock).mockRejectedValue(
