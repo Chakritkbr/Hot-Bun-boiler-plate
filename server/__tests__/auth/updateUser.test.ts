@@ -45,6 +45,15 @@ const app = express();
 app.use(bodyParser.json());
 app.put('/edit/:id', authenticateToken, authorizeUser, updateUser);
 
+// Mock console.error
+const originalConsoleError = console.error;
+beforeEach(() => {
+  console.error = jest.fn();
+});
+afterEach(() => {
+  console.error = originalConsoleError;
+});
+
 describe('PUT /edit/:id', () => {
   const mockUserId = '123';
   const mockEmail = 'test@example.com';
