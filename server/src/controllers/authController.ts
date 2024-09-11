@@ -11,6 +11,9 @@ import {
   genToken,
 } from '../utils/authUtils';
 import { CustomUserRequest } from '../middlewares/authMiddleware';
+import { genOTPAndSave, isOTPExpired } from '../utils/otpUtils';
+import { sendOtp } from '../utils/emailUtils';
+import { deleteOTP, getOTPFromDatabase } from '../models/otpModel';
 
 //DB connect
 const pool: Pool = dbPool;
@@ -142,5 +145,57 @@ export const deleteUser = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error deleting user:', error);
     res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+export const forgotPassword = async (req: Request, res: Response) => {
+  const { email } = req.body;
+
+  try {
+    const otp = await genOTPAndSave(pool, email);
+
+    await sendOtp(email, otp);
+
+    res.status(200).json({ message: 'OTP sent to your email.' });
+  } catch (error) {
+    console.error('Error sending OTP:', error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+};
+
+export const verifyOtp = async (req: Request, res: Response) => {
+  const { email, otp } = req.body;
+
+  // ตรวจสอบว่าค่า email และ otp ถูกส่งมาหรือไม่
+  if (!email || !otp) {
+    return res.status(400).json({ message: 'Email and OTP are required.' });
+  }
+
+  try {
+    const storedOTPData = await getOTPFromDatabase(pool, email);
+
+    if (!storedOTPData) {
+      return res.status(400).json({ message: 'Invalid or expired OTP.' });
+    }
+
+    const { otp: storedOTP, expires_at: expiresAt } = storedOTPData;
+
+    if (storedOTP !== otp) {
+      return res.status(400).json({ message: 'Invalid OTP.' });
+    }
+
+    if (isOTPExpired(expiresAt)) {
+      return res.status(400).json({ message: 'OTP expired.' });
+    }
+
+    // ลบ OTP หลังจากที่ใช้งานเสร็จ
+    await deleteOTP(pool, email);
+
+    res
+      .status(200)
+      .json({ message: 'OTP verified. Proceed with password reset.' });
+  } catch (error) {
+    console.error('Error verifying OTP:', error);
+    res.status(500).json({ message: 'Internal server error.' });
   }
 };
