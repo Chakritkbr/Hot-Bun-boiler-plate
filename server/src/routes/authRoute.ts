@@ -22,4 +22,8 @@ router.delete(
   authorizeUser,
   authControllers.deleteUser
 );
+
+router.post('/service/forgot-password', authControllers.forgotPassword);
+router.post('/service/verify-otp', authControllers.verifyOtp);
+
 export default router;
