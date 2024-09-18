@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
 import dbPool from './db';
 import authRoutes from './routes/authRoute';
+import productRoutes from './routes/productRoute';
 import { consoleLogger, fileLogger } from './utils/logger';
 
 dotenv.config({ path: './.env' });
@@ -19,5 +20,6 @@ app.set('dbPool', dbPool);
 app.set('server_port', SERVER_PORT);
 
 app.use('', authRoutes);
+app.use('', productRoutes);
 
 export default app;
