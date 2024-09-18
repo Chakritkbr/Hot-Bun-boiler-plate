@@ -7,7 +7,6 @@ import {
   updateProductById,
 } from './../models/productModel';
 import { Request, Response } from 'express';
-import { Pool } from 'mysql2/promise';
 
 export const create = async (req: Request, res: Response): Promise<void> => {
   try {
