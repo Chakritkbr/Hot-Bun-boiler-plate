@@ -25,22 +25,6 @@ export const verifyToken = (token: string): object | null => {
   }
 };
 
-export const userValidate = Joi.object({
-  email: Joi.string().email().required().messages({
-    'string.email': 'Invalid email format.',
-    'any.required': 'Email is required.',
-  }),
-  password: Joi.string()
-    .min(6)
-    .pattern(new RegExp('(?=.*[A-Z])'))
-    .required()
-    .messages({
-      'string.min': 'Password must be at least 6 characters long.',
-      'string.pattern.base':
-        'Password must contain at least one uppercase letter.',
-    }),
-});
-
 export const checkUserExists = async (pool: Pool, email: string) => {
   const [rows] = await pool.query<UserInterface[]>(
     'SELECT * FROM users WHERE email = ?',
