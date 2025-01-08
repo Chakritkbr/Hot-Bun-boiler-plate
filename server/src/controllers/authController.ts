@@ -5,7 +5,6 @@ import {
   checkUserExists,
   generateUserId,
   hashPassword,
-  userValidate,
   UserInterface,
   checkPassword,
   genToken,
@@ -13,6 +12,7 @@ import {
 import { CustomUserRequest } from '../middlewares/authMiddleware';
 import { genOTPAndSave, isOTPExpired } from '../utils/otpUtils';
 import { sendOtp } from '../utils/emailUtils';
+import { userValidate } from '../utils/validateUtils';
 import { deleteOTP, getOTPFromDatabase } from '../models/otpModel';
 
 //DB connect

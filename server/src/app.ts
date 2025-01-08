@@ -3,6 +3,8 @@ import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
 import dbPool from './db';
 import authRoutes from './routes/authRoute';
+import categoryRoutes from './routes/categoryRoute';
+import discountRoutes from './routes/discountRoute';
 import { consoleLogger, fileLogger } from './utils/logger';
 
 dotenv.config({ path: './.env' });
@@ -19,5 +21,7 @@ app.set('dbPool', dbPool);
 app.set('server_port', SERVER_PORT);
 
 app.use('', authRoutes);
+app.use('', categoryRoutes);
+app.use('', discountRoutes);
 
 export default app;
